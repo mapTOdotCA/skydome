@@ -15,6 +15,13 @@
     font-family: sans-serif;
 }
 
+#insetWrap p {
+    font-size:14px;
+    line-height: 20px;
+    color:#555;
+    margin:0;
+}
+
 #mapWrap {
     display: block;
     max-width:1400px;
@@ -37,13 +44,6 @@
     z-index:201;
     position:absolute;
     color:#555;
-}
-
-#mapHead p {
-    font-size:14px;
-    line-height: 20px;
-    color:#555;
-    margin:0;
 }
 
 #map {
@@ -133,10 +133,69 @@
     color:#888;
 }
 
+#creditMobile {
+    display: none;
+}
+
 .credit a {
     text-decoration:none;
     color: coral;
 }
+
+@media (max-width:800px) {
+    #mapHead {
+        left:0;
+        top:0;
+        max-width:100%;
+        padding: 0px 15px 20px;
+        position: inherit;
+    }
+
+    #map {
+        height: 300px;
+        width: 100%;
+        display: block;
+        position: inherit;
+    }
+
+    #mapWrap {
+        height:100%;
+    }
+
+    #mapLoad {
+        height:100%;
+        position: absolute;
+    }
+
+    #mapBtnHolder {
+        text-align: left;
+    }
+
+    .mapBtn {
+        text-align: center;
+        width: 23%;
+        font-size: 10px;
+        padding: 10px 0;
+    }
+
+    #panBuild {
+        width:100%;
+    }
+
+    #mapHead .credit {
+        display: none;
+    }
+
+    #creditMobile {
+        display: inherit;
+    }
+
+    #creditMobile .credit p {
+        font-size: 12px;
+        color:#888;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -146,10 +205,10 @@
             <h2>How big is the <span style="color:#ed6319">SkyDome?</span></h2>
             <p>According to mlb.com it's 11.5 acres (4.66 hectares), but if you want to compare that size to something a bit more familiar, click through the buttons below.</p>
             <div id='mapBtnHolder'>
-                <div class='mapBtn' id="queensPark" datalng="-79.3922" datalat="43.66454">Queen's Park</div>
+                <div class='mapBtn' id="queensPark" datalng="-79.3922" datalat="43.66454">Queen's<br>Park</div>
                 <div class='mapBtn' id="highPark" datalng="-79.466463" datalat="43.649483">High<br>Park</div>
-                <div class='mapBtn' id="trinityPark" datalng="-79.414228" datalat="43.648446">Trinity Bellwoods</div>
-                <div class='mapBtn' id="olympicStadium" datalng="-73.5515" datalat="45.5578">Olympic Stadium</div>
+                <div class='mapBtn' id="trinityPark" datalng="-79.414228" datalat="43.648446">Trinity<br>Bellwoods</div>
+                <div class='mapBtn' id="olympicStadium" datalng="-73.5515" datalat="45.5578">Olympic<br>Stadium</div>
             </div>
             <p>Or manually move.</p>
             <div class='mapBtn' id="panBuild">Move SkyDome &nbsp; &#x2194;</div>
@@ -164,6 +223,13 @@
         </div>
         <div id='map'>
             
+        </div>
+    </div>
+    <div id="creditMobile">
+        <div class="credit">
+            <p>Data: <a href="https://www.toronto.ca/city-government/data-research-maps/open-data/open-data-catalogue/#db07630f-252d-f7ae-2dff-8d0b38ec6576" target="_blank">City of Toronto</a></p>
+            <p>By: <a href="http://www.mapto.ca/" target="_blank">MapTO</a></p>
+            <p>Code derived from: <a href="https://bl.ocks.org/andrewharvey/7b61e9bdb4165e8832b7495c2a4f17f7" target="_blank">Andrew Harvey</a></p>
         </div>
     </div>
 </div>
