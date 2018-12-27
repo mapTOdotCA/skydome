@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>SkyDome Map</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.50.0/mapbox-gl.js"></script>
+<link rel="stylesheet" type="text/css" href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.50.0/mapbox-gl.css">
+<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/94/three.min.js'></script>
+<script src="./js/GLTFLoader.js"></script>
+<style>
+#insetWrap {
+    display: block;
+    width:100%;
+    font-family: sans-serif;
+}
+
+#mapWrap {
+    display: block;
+    max-width:1400px;
+    margin: auto;
+    height:650px;
+    position: relative;
+    pointer-events:none;
+}
+
+#mapHead {
+    display: block;
+    text-align: left;
+    max-width:350px;
+    top:10px;
+    left: 10px;
+    background:#FFFFFF;
+    border:1px solid #efefef;
+    border-radius:3px;
+    padding:20px 40px 30px;
+    z-index:201;
+    position:absolute;
+    color:#555;
+}
+
+#mapHead p {
+    font-size:14px;
+    line-height: 20px;
+    color:#555;
+    margin:0;
+}
+
+#map {
+    height:750px;
+    width:100%;
+    position: absolute;
+    top:0;
+}
+
+#mapLoad {
+    top:0;
+    left:0;
+    position:relative;
+    background-color: #FFFFFF;
+    height:750px;
+    width:100%;
+    z-index:999;
+    opacity:1;
+    pointer-events: none;
+    -webkit-transition: opacity 1s ease-in-out;
+    -moz-transition: opacity 1s ease-in-out;
+    -ms-transition: opacity 1s ease-in-out;
+    -o-transition: opacity 1s ease-in-out;
+}
+
+#mapLoader {
+      position: absolute;
+      left: 48%;
+      top: 35%;
+      z-index: 201;
+      border: 3px solid #f5f5f0;
+      border-radius: 50%;
+      border-top: 3px solid #eb5200;
+      width: 30px;
+      height: 30px;
+      pointer-events: none;
+      -webkit-animation: mapLoadSpin 1s linear infinite;
+      animation: mapLoadSpin 1s linear infinite;
+    }
+    @-webkit-keyframes mapLoadSpin {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+    @keyframes mapLoadSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+#mapBtnHolder {
+    margin: 15px 0 15px;
+    text-align:center;
+}
+
+.mapBtn {
+    display: inline-block;
+    padding: 10px 7px;
+    width: 66px;
+    background:#efefef;
+    border:1px solid #d3d3d3;
+    border-radius:3px;
+    font-size:12px;
+}
+
+.mapBtn:hover {
+    background:#d3d3d3;
+    cursor: pointer;
+}
+
+#panBuild {
+    width:330px;
+    border:1px solid #bc4100;
+    background: #ed6319;
+    color:#FFFFFF;
+    font-size:18px;
+    text-align: center;
+    margin-top:10px;
+    height:28px;
+    line-height: 28px;
+}
+
+.credit {
+    margin-top:20px;
+}
+
+#mapHead .credit p {
+    font-size: 12px;
+    color:#888;
+}
+
+.credit a {
+    text-decoration:none;
+    color: coral;
+}
+</style>
+</head>
+<body>
+<div id="insetWrap">
+    <div id="mapWrap">
+        <div id="mapHead">
+            <h2>How big is the <span style="color:#ed6319">SkyDome?</span></h2>
+            <p>According to mlb.com it's 11.5 acres (4.66 hectares), but if you want to compare that size to something a bit more familiar, click through the buttons below.</p>
+            <div id='mapBtnHolder'>
+                <div class='mapBtn' id="queensPark" datalng="-79.3922" datalat="43.66454">Queen's Park</div>
+                <div class='mapBtn' id="highPark" datalng="-79.466463" datalat="43.649483">High<br>Park</div>
+                <div class='mapBtn' id="trinityPark" datalng="-79.414228" datalat="43.648446">Trinity Bellwoods</div>
+                <div class='mapBtn' id="olympicStadium" datalng="-73.5515" datalat="45.5578">Olympic Stadium</div>
+            </div>
+            <p>Or manually move.</p>
+            <div class='mapBtn' id="panBuild">Move SkyDome &nbsp; &#x2194;</div>
+            <div class="credit">
+                <p>Data: <a href="https://www.toronto.ca/city-government/data-research-maps/open-data/open-data-catalogue/#db07630f-252d-f7ae-2dff-8d0b38ec6576" target="_blank">City of Toronto</a></p>
+                <p>By: <a href="http://www.mapto.ca/" target="_blank">MapTO</a></p>
+                <p>Code derived from: <a href="https://bl.ocks.org/andrewharvey/7b61e9bdb4165e8832b7495c2a4f17f7" target="_blank">Andrew Harvey</a></p>
+            </div>
+        </div>
+        <div id="mapLoad">
+            <div id="mapLoader"></div>
+        </div>
+        <div id='map'>
+            
+        </div>
+    </div>
+</div>
+<script>
+var transform, translate;
+var movingSkydome = false;
+
+document.getElementById("queensPark").addEventListener("click", moveSkydome);
+document.getElementById("highPark").addEventListener("click", moveSkydome);
+document.getElementById("trinityPark").addEventListener("click", moveSkydome);
+document.getElementById("olympicStadium").addEventListener("click", moveSkydome);
+document.getElementById("panBuild").addEventListener("click", panSkydome);
+
+mapboxgl.accessToken = 'pk.eyJ1Ijoid2lsbGlhbWJlbmRhdmlzIiwiYSI6IlVrb3BGVzQifQ.jeHxDCnpXXvAXKfAFEYG-A';
+
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/satellite-streets-v9',
+    center: [-79.389177, 43.641587],
+    zoom: 15.2,
+    bearing: -17,
+    pitch: 0
+});
+
+var zoomControl = new mapboxgl.NavigationControl();
+map.addControl(zoomControl);
+
+function panSkydome() {
+    movingSkydome = true;
+    map.on('mousemove', getMouseCoord);
+    this.innerHTML = "Click anywhere to place";
+}
+
+map.on('click', function() {
+    if (movingSkydome = true) {
+        movingSkydome = false;
+        map.off('mousemove', getMouseCoord);
+        document.getElementById("panBuild").innerHTML = "Move SkyDome &nbsp; &#x2194;"
+    }
+});
+
+function moveSkydome(e) {
+
+    var dataLat = parseFloat(this.getAttribute('datalat'));
+    var dataLng = parseFloat(this.getAttribute('datalng'));
+
+    var placeLat = dataLat - 0.002;
+    var placeLng = dataLng + 0.001;
+
+    getTranslate(placeLng, placeLat);
+    map.jumpTo({
+        center: [dataLng, dataLat],
+        pitch:50,
+        bearing:-25
+    });
+
+}
+
+// converts from WGS84 Longitude, Latitude into a unit vector anchor at the top left as needed for GL JS custom layers
+var fromLL = function (lon,lat) {
+    // derived from https://gist.github.com/springmeyer/871897
+    var extent = 20037508.34;
+
+    var x = lon * extent / 180;
+    var y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
+    y = y * extent / 180;
+
+    return [(x + extent) / (2 * extent), 1 - ((y + extent) / (2 * extent))];
+}
+
+
+function getMouseCoord(e) {
+    var pointlat = e.lngLat.lat - 0.002;
+    var pointlng = e.lngLat.lng + 0.001;
+    getTranslate(pointlng, pointlat);
+}
+
+function getTranslate(lng, lat) {
+    translate = fromLL(lng, lat);
+
+    transform = {
+        translateX: translate[0],
+        translateY: translate[1],
+        translateZ: 0.00000075,
+        rotateX: Math.PI / 1,
+        rotateY: 3.1,
+        rotateZ: 3.15,
+        scale: 0.00000000084
+    }
+} 
+
+
+var THREE = window.THREE;
+
+// Create the Mapbox Custom Layer object
+// See 
+var threeJSModel = {
+    id: 'custom_layer',
+    type: 'custom',
+    onAdd: function(map, gl) {
+
+        getTranslate(-79.388, 43.63961);
+
+        this.camera = new THREE.Camera();
+        this.scene = new THREE.Scene();
+
+        var directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+        directionalLight.position.set(0, -70, 100).normalize();
+        this.scene.add(directionalLight);
+
+        var directionalLight2 = new THREE.DirectionalLight(0xFFFFFF);
+        directionalLight2.position.set(50, 70, 100).normalize();
+        this.scene.add(directionalLight2);
+
+        var loader = new THREE.GLTFLoader();
+        loader.load('skydome.glb', (function (gltf) {
+            this.scene.add(gltf.scene);
+        }).bind(this));
+        this.map = map;
+
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: map.getCanvas(),
+            context: gl
+        });
+
+        this.renderer.autoClear = false;
+    },
+    render: function(gl, matrix) {
+        var rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), transform.rotateX);
+        var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 1, 0), transform.rotateY);
+        var rotationZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), transform.rotateZ);
+
+        var m = new THREE.Matrix4().fromArray(matrix);
+        var l = new THREE.Matrix4().makeTranslation(transform.translateX, transform.translateY, transform.translateZ)
+            .scale(new THREE.Vector3(transform.scale, -transform.scale, transform.scale))
+            .multiply(rotationX)
+            .multiply(rotationY)
+            .multiply(rotationZ);
+
+        this.camera.projectionMatrix.elements = matrix;
+        this.camera.projectionMatrix = m.multiply(l);
+        this.renderer.state.reset();
+        this.renderer.render(this.scene, this.camera);
+        this.map.triggerRepaint();
+    }
+}
+
+map.on('style.load', function() {
+    map.addLayer(threeJSModel);
+
+    document.getElementById('mapLoad').style.opacity = 0;
+    document.getElementById('mapLoader').style.display = "none";
+    document.getElementById('mapWrap').style.pointerEvents = "inherit";
+
+});
+
+</script>
+</body>
+</html>
